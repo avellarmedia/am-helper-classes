@@ -1,0 +1,111 @@
+<?php
+
+	abstract class Helper_Customize{
+
+		public $customize;
+		
+		public $panels = [];
+		public $sections = [];
+		public $controls = [];
+		public $settings = [];
+
+		final function __construct($customize){
+			$this->customize = $customize;
+			
+			$this->customization_page();
+			$this->register();
+
+		}
+
+		abstract function customization_page();
+
+		public function add_panel($id, $args = []){
+			$this->panels = is_array($id)? 
+				array_merge($this->panels, $id): 
+				array_merge(['id' => $id], $args);
+		}
+
+		public function add_section($id, $args = []){
+			$this->sections = is_array($id)? 
+				array_merge($this->sections, $id): 
+				array_merge(['id' => $id], $args);
+		}
+
+		public function add_setting($id, $args = []){
+			$this->settings = is_array($id)? 
+				array_merge($this->settings, $id):
+				array_merge(['id' => $id], $args);
+		}
+
+		public function add_control($id, $args = []){
+
+			$controls = ($arr = is_array($id))? $id: array_merge(['id' => $id], $args);
+
+			if($arr){
+				foreach($controls as $key => $control){
+	
+					if(!empty($control['settings']) && is_array($control['settings'][0])){
+						
+						$this->add_setting($control['settings']);
+						
+						$settings = $control['settings'];
+						$controls[$key]['settings'] = [];
+						
+						foreach($settings as $setting){
+							$controls[$key]['settings'][] = $setting['id'];
+						}
+						
+					}
+
+				}
+			}
+			
+			$this->controls = array_merge($this->controls, $controls);
+		}
+
+		private function register(){
+
+			foreach($this->panels as $panel){
+
+				$id = $panel['id'];
+				$title = $panel['title'];
+
+				unset($panel['id'], $panel['title']);
+				$this->customize->add_panel($id, array_merge(['title' => _x($title, 'Customize panel title')], $panel));
+
+			}
+
+			foreach($this->sections as $sec){
+
+				$id = $sec['id'];
+				$title = $sec['title'];
+
+				unset($sec['id'], $sec['title']);
+				$this->customize->add_section($id, array_merge(['title' => _x($title, 'Customize section title')], $sec));
+
+			}
+
+			foreach($this->settings as $setting){
+
+				$id = $setting['id'];
+
+				unset($setting['id']);
+				$this->customize->add_setting($id, $setting);
+			}
+
+			foreach($this->controls as $control){
+
+				$id = $control['id'];
+				$label = $control['label'] ?? $control['title'];
+
+				unset($control['label'], $control['title'], $control['id']);
+				$this->customize->add_control($id, array_merge(['label' => _x($label, 'Customize control label')], $control));
+
+			}
+
+		}
+
+
+	}
+
+?>
